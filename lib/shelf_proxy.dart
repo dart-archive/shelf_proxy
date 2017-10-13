@@ -15,13 +15,22 @@ import 'src/utils.dart';
 /// `http://example.com/docs`, a request to `/documentation/tutorials`
 /// will be proxied to `http://example.com/docs/tutorials`.
 ///
+/// [url] must be a [String] or [Uri].
+///
 /// [client] is used internally to make HTTP requests. It defaults to a
 /// `dart:io`-based client.
 ///
 /// [proxyName] is used in headers to identify this proxy. It should be a valid
 /// HTTP token or a hostname. It defaults to `shelf_proxy`.
 Handler proxyHandler(url, {http.Client client, String proxyName}) {
-  var uri = (url is String) ? Uri.parse(url) : url as Uri;
+  Uri uri;
+  if (url is String) {
+    uri = Uri.parse(url);
+  } else if (url is Uri) {
+    uri = url;
+  } else {
+    throw new ArgumentError.value(url, 'url', 'url must be a String or Uri.');
+  }
   client ??= new http.Client();
   proxyName ??= 'shelf_proxy';
 

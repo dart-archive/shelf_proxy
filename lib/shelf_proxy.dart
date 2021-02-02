@@ -21,7 +21,8 @@ import 'package:shelf/shelf.dart';
 ///
 /// [proxyName] is used in headers to identify this proxy. It should be a valid
 /// HTTP token or a hostname. It defaults to `shelf_proxy`.
-Handler proxyHandler(url, {http.Client client, String proxyName}) {
+Handler proxyHandler(url,
+    {http.Client? client, String proxyName = 'shelf_proxy'}) {
   Uri uri;
   if (url is String) {
     uri = Uri.parse(url);
@@ -30,8 +31,7 @@ Handler proxyHandler(url, {http.Client client, String proxyName}) {
   } else {
     throw ArgumentError.value(url, 'url', 'url must be a String or Uri.');
   }
-  client ??= http.Client();
-  proxyName ??= 'shelf_proxy';
+  var _client = client ?? http.Client();
 
   return (serverRequest) async {
     // TODO(nweiz): Support WebSocket requests.
@@ -54,7 +54,7 @@ Handler proxyHandler(url, {http.Client client, String proxyName}) {
         .forEach(clientRequest.sink.add)
         .catchError(clientRequest.sink.addError)
         .whenComplete(clientRequest.sink.close));
-    var clientResponse = await client.send(clientRequest);
+    var clientResponse = await _client.send(clientRequest);
     // Add a Via header. See
     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.45
     _addHeader(clientResponse.headers, 'via', '1.1 $proxyName');
@@ -79,8 +79,9 @@ Handler proxyHandler(url, {http.Client client, String proxyName}) {
     // than the destination server, if possible.
     if (clientResponse.isRedirect &&
         clientResponse.headers.containsKey('location')) {
-      var location =
-          requestUrl.resolve(clientResponse.headers['location']).toString();
+      var location = requestUrl
+          .resolve(clientResponse.headers['location'] ?? '')
+          .toString();
       if (p.url.isWithin(uri.toString(), location)) {
         clientResponse.headers['location'] =
             '/' + p.url.relative(location, from: uri.toString());
@@ -103,7 +104,7 @@ Handler createProxyHandler(Uri rootUri) => proxyHandler(rootUri);
 /// gracefully.
 void _addHeader(Map<String, String> headers, String name, String value) {
   if (headers.containsKey(name)) {
-    headers[name] += ', $value';
+    headers[name] = (headers[name] ?? '') + ', $value';
   } else {
     headers[name] = value;
   }

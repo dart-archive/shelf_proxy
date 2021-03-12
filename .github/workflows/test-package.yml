@@ -29,7 +29,7 @@ jobs:
       - id: install
         run: dart pub get
       - run: dart format --output=none --set-exit-if-changed .
-        if: always() && steps.install.outcome == 'success'
+        if: matrix.sdk == 'dev' && steps.install.outcome == 'success'
       - run: dart analyze --fatal-infos
         if: always() && steps.install.outcome == 'success'
 

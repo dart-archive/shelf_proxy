@@ -12,10 +12,10 @@ import 'package:shelf_proxy/shelf_proxy.dart';
 import 'package:test/test.dart';
 
 /// The URI of the server the current proxy server is proxying to.
-Uri targetUri;
+late Uri targetUri;
 
 /// The URI of the current proxy server.
-Uri proxyUri;
+late Uri proxyUri;
 
 void main() {
   group('forwarding', () {
@@ -186,7 +186,7 @@ void main() {
 ///
 /// [targetPath] is the root-relative path on the target server to proxy to. It
 /// defaults to `/`.
-Future createProxy(shelf.Handler handler, {String targetPath}) async {
+Future createProxy(shelf.Handler handler, {String? targetPath}) async {
   handler = expectAsync1(handler, reason: 'target server handler');
   var targetServer = await shelf_io.serve(handler, 'localhost', 0);
   targetUri = Uri.parse('http://localhost:${targetServer.port}');
@@ -212,7 +212,7 @@ shelf.Handler mockHandler(
 }
 
 /// Schedules a GET request with [headers] to the proxy server.
-Future<http.Response> get({Map<String, String> headers}) {
+Future<http.Response> get({Map<String, String>? headers}) {
   var uri = proxyUri;
   var request = http.Request('GET', uri);
   if (headers != null) request.headers.addAll(headers);

@@ -1,3 +1,8 @@
+## 1.0.0
+
+- Require Dart `2.12`.
+- Enable null safety.
+
 ## 0.1.0+7
 
 * Added example.

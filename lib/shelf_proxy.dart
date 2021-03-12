@@ -30,7 +30,7 @@ Handler proxyHandler(url, {http.Client? client, String? proxyName}) {
   } else {
     throw ArgumentError.value(url, 'url', 'url must be a String or Uri.');
   }
-  final theClient = client ?? http.Client();
+  final nonNullClient = client ?? http.Client();
   proxyName ??= 'shelf_proxy';
 
   return (serverRequest) async {
@@ -38,11 +38,11 @@ Handler proxyHandler(url, {http.Client? client, String? proxyName}) {
 
     // TODO(nweiz): Handle TRACE requests correctly. See
     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.8
-    var requestUrl = uri.resolve(serverRequest.url.toString());
-    var clientRequest = http.StreamedRequest(serverRequest.method, requestUrl);
-    clientRequest.followRedirects = false;
-    clientRequest.headers.addAll(serverRequest.headers);
-    clientRequest.headers['Host'] = uri.authority;
+    final requestUrl = uri.resolve(serverRequest.url.toString());
+    final clientRequest = http.StreamedRequest(serverRequest.method, requestUrl)
+      ..followRedirects = false
+      ..headers.addAll(serverRequest.headers)
+      ..headers['Host'] = uri.authority;
 
     // Add a Via header. See
     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.45
@@ -54,7 +54,7 @@ Handler proxyHandler(url, {http.Client? client, String? proxyName}) {
         .forEach(clientRequest.sink.add)
         .catchError(clientRequest.sink.addError)
         .whenComplete(clientRequest.sink.close));
-    var clientResponse = await theClient.send(clientRequest);
+    final clientResponse = await nonNullClient.send(clientRequest);
     // Add a Via header. See
     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.45
     _addHeader(clientResponse.headers, 'via', '1.1 $proxyName');
@@ -79,11 +79,11 @@ Handler proxyHandler(url, {http.Client? client, String? proxyName}) {
     // than the destination server, if possible.
     if (clientResponse.isRedirect &&
         clientResponse.headers.containsKey('location')) {
-      var location =
+      final location =
           requestUrl.resolve(clientResponse.headers['location']!).toString();
       if (p.url.isWithin(uri.toString(), location)) {
         clientResponse.headers['location'] =
-            '/' + p.url.relative(location, from: uri.toString());
+            '/${p.url.relative(location, from: uri.toString())}';
       } else {
         clientResponse.headers['location'] = location;
       }
@@ -93,10 +93,6 @@ Handler proxyHandler(url, {http.Client? client, String? proxyName}) {
         body: clientResponse.stream, headers: clientResponse.headers);
   };
 }
-
-/// Use [proxyHandler] instead.
-@deprecated
-Handler createProxyHandler(Uri rootUri) => proxyHandler(rootUri);
 
 // TODO(nweiz): use built-in methods for this when http and shelf support them.
 /// Add a header with [name] and [value] to [headers], handling existing headers

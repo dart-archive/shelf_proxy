@@ -33,7 +33,7 @@ jobs:
       - run: dart analyze --fatal-infos
         if: matrix.sdk == 'dev' && steps.install.outcome == 'success'
       - run: dart analyze
-        if: matrix.sdk == '2.12.0' && steps.install.output == 'success'
+        if: matrix.sdk != 'dev' && steps.install.output == 'success'
 
   # Run tests on a matrix consisting of two dimensions:
   # 1. OS: ubuntu-latest, (macos-latest, windows-latest)

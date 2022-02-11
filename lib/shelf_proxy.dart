@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'dart:io' show HttpConnectionInfo;
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:shelf/shelf.dart';
@@ -49,6 +50,8 @@ Handler proxyHandler(url, {http.Client? client, String? proxyName}) {
     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.45
     _addHeader(clientRequest.headers, 'via',
         '${serverRequest.protocolVersion} $proxyName');
+    _addHeader(clientRequest.headers, 'x-forwarded-for',
+        (serverRequest.context['shelf.io.connection_info']! as HttpConnectionInfo).remoteAddress.address);
 
     serverRequest
         .read()
@@ -60,6 +63,8 @@ Handler proxyHandler(url, {http.Client? client, String? proxyName}) {
     // Add a Via header. See
     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.45
     _addHeader(clientResponse.headers, 'via', '1.1 $proxyName');
+    _addHeader(clientRequest.headers, 'x-forwarded-for',
+        (serverRequest.context['shelf.io.connection_info']! as HttpConnectionInfo).remoteAddress.address);
 
     // Remove the transfer-encoding since the body has already been decoded by
     // [client].
